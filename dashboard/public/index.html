@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReleaseGuard AI — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #090d16;
+      color: #f8fafc;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.6;
+    }
+    a { color: #60a5fa; text-decoration: none; }
+    a:hover { color: #93c5fd; }
+
+    /* ── Scrollbars ────────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f1623; }
+    ::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a3f5f; }
+
+    /* ── Utilities ─────────────────────────────────────────────────────────── */
+    .mono { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+    .fade-in { animation: fadeIn .35s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .layout-max { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+    .main-content { padding: 28px 24px; max-width: 1280px; margin: 0 auto; }
+    .space-y > * + * { margin-top: 20px; }
+
+    /* ── Header ─────────────────────────────────────────────────────────────── */
+    .site-header {
+      background: #0b0f17;
+      border-bottom: 1px solid #1a2540;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      height: 56px;
+    }
+    .site-header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-badge {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: #fff;
+      letter-spacing: -.5px;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(59,130,246,.3), 0 2px 8px rgba(59,130,246,.2);
+    }
+    .brand-name { font-weight: 700; font-size: 14px; color: #f1f5f9; letter-spacing: -.2px; }
+    .brand-sub  { font-size: 11px; color: #475569; margin-top: 1px; }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .live-indicator {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: #64748b; font-weight: 500;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      animation: pulse-dot 2s ease infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 6px #22c55e; }
+      50% { opacity: .6; box-shadow: 0 0 12px #22c55e; }
+    }
+    .env-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(59,130,246,.1);
+      color: #60a5fa;
+      border: 1px solid rgba(59,130,246,.2);
+      letter-spacing: .3px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    #last-run {
+      font-size: 11px; color: #475569;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 16px;
+      background: #1d4ed8;
+      border: 1px solid #2563eb;
+      color: #eff6ff;
+      font-size: 12px; font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, box-shadow .15s, transform .1s;
+      outline: none;
+      letter-spacing: .1px;
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.18);
+    }
+    .btn-primary:active { transform: scale(.97); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    /* ── Cards ──────────────────────────────────────────────────────────────── */
+    .card {
+      background: #111827;
+      border: 1px solid #1a2540;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid #1a2540;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 600; color: #e2e8f0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-subtitle { font-size: 11px; color: #475569; }
+    .card-body { padding: 20px; }
+
+    /* ── Grid ───────────────────────────────────────────────────────────────── */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .col-span-3 { grid-column: span 3; }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1024px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .col-span-3 { grid-column: span 2; }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .grid-4 { grid-template-columns: 1fr; }
+      .col-span-3 { grid-column: span 1; }
+    }
+
+    /* ── Verdict Banner ─────────────────────────────────────────────────────── */
+    #verdict-banner {
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    #verdict-banner.hidden { display: none; }
+    .verdict-icon {
+      width: 18px; height: 18px; flex-shrink: 0;
+    }
+
+    /* ── Risk Score Card ────────────────────────────────────────────────────── */
+    .risk-score-card {
+      background: #111827;
+      border: 1px solid #1a2540;
+      border-radius: 10px;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .risk-score-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      margin-bottom: 16px;
+    }
+    .score-ring {
+      stroke-dasharray: 314;
+      stroke-dashoffset: 314;
+      transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1), stroke .4s;
+    }
+    .score-num {
+      font-size: 36px; font-weight: 700; line-height: 1;
+      transition: color .4s;
+    }
+    .score-denom { font-size: 11px; color: #475569; margin-top: 3px; }
+    #score-label {
+      margin-top: 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    #version-badge {
+      margin-top: 6px;
+      font-size: 10px;
+      color: #334155;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Domain Cards ───────────────────────────────────────────────────────── */
+    .domain-card {
+      background: #111827;
+      border: 1px solid #1a2540;
+      border-radius: 10px;
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .domain-card:hover { background: #131e35; border-color: #1e3254; }
+    .domain-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .domain-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: #0f1829;
+      border: 1px solid #1a2540;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .domain-icon svg { width: 16px; height: 16px; }
+    .domain-card-name {
+      font-size: 13px; font-weight: 600; color: #cbd5e1;
+    }
+    .domain-card-issues {
+      font-size: 11px; color: #475569; margin-top: 4px;
+    }
+
+    /* ── Status Pills ───────────────────────────────────────────────────────── */
+    .status-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .badge-ok    { background: rgba(34,197,94,.12);  color: #4ade80; border-color: rgba(34,197,94,.25); }
+    .badge-fail  { background: rgba(239,68,68,.12);  color: #f87171; border-color: rgba(239,68,68,.25); }
+    .badge-warn  { background: rgba(245,158,11,.12); color: #fbbf24; border-color: rgba(245,158,11,.25); }
+    .badge-idle  { background: rgba(100,116,139,.1); color: #64748b; border-color: rgba(100,116,139,.2); }
+
+    /* ── Detail Panel ───────────────────────────────────────────────────────── */
+    #detail-panel { transition: none; }
+    #detail-panel.hidden { display: none; }
+    .detail-close-btn {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: #0f1829;
+      border: 1px solid #1a2540;
+      border-radius: 6px;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 16px; line-height: 1;
+      transition: background .1s, color .1s;
+    }
+    .detail-close-btn:hover { background: #1a2540; color: #94a3b8; }
+
+    /* ── Audit Output ───────────────────────────────────────────────────────── */
+    #audit-output-wrap.hidden { display: none; }
+    .code-block {
+      background: #080c14;
+      padding: 18px 20px;
+      max-height: 280px;
+      overflow: auto;
+      font-size: 11.5px;
+      line-height: 1.7;
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Stream Buttons ─────────────────────────────────────────────────────── */
+    .stream-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .12s, box-shadow .12s;
+      border: 1px solid transparent;
+      letter-spacing: .05px;
+      white-space: nowrap;
+    }
+    .stream-btn:hover { opacity: .85; }
+    .stream-btn:active { opacity: .65; }
+    .stream-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .sbtn-audit   { background: #1d4ed8; border-color: #2563eb; color: #eff6ff; }
+    .sbtn-fix     { background: #92400e; border-color: #b45309; color: #fef3c7; }
+    .sbtn-dba     { background: #4c1d95; border-color: #6d28d9; color: #ede9fe; }
+    .sbtn-sandbox { background: #064e3b; border-color: #065f46; color: #d1fae5; }
+    .sbtn-clear   { background: #1a2540; border-color: #1e2d45; color: #64748b; }
+    .sbtn-clear:hover { color: #94a3b8; }
+
+    /* ── Terminal ───────────────────────────────────────────────────────────── */
+    .terminal-section { background: #111827; border: 1px solid #1a2540; border-radius: 10px; overflow: hidden; }
+    .terminal-controls {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid #1a2540;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .terminal-controls-left {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .terminal-controls-right {
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap;
+    }
+    .terminal-section-title {
+      font-size: 13px; font-weight: 600; color: #e2e8f0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #stream-status-badge {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 20px;
+      letter-spacing: .05em;
+    }
+    .terminal-titlebar {
+      background: #0b1120;
+      padding: 9px 16px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-bottom: 1px solid #141e30;
+    }
+    .terminal-dot { width: 11px; height: 11px; border-radius: 50%; }
+    #terminal-cmd-label {
+      margin-left: 10px;
+      font-size: 11px;
+      color: #334155;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .terminal-window {
+      background: #080c14;
+      padding: 16px;
+      min-height: 200px;
+      max-height: 420px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #8b9ab4;
+    }
+    .terminal-window::-webkit-scrollbar { width: 4px; }
+    .terminal-window::-webkit-scrollbar-track { background: #080c14; }
+    .terminal-window::-webkit-scrollbar-thumb { background: #1a2540; border-radius: 2px; }
+    .terminal-line { display: block; white-space: pre-wrap; word-break: break-all; }
+    .terminal-line.cmd      { color: #60a5fa; font-weight: 600; }
+    .terminal-line.done-ok  { color: #4ade80; font-weight: 600; }
+    .terminal-line.done-err { color: #f87171; font-weight: 600; }
+    .terminal-line.err      { color: #f87171; }
+    .terminal-cursor {
+      display: inline-block;
+      width: 7px; height: 13px;
+      background: #3b82f6;
+      vertical-align: text-bottom;
+      animation: blink 1.1s step-end infinite;
+      border-radius: 1px;
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+    /* ── Tables ─────────────────────────────────────────────────────────────── */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table thead tr {
+      background: #0c1523;
+      border-bottom: 1px solid #1a2540;
+    }
+    .data-table thead th {
+      text-align: left; padding: 10px 16px;
+      font-size: 10px; font-weight: 600; color: #475569;
+      text-transform: uppercase; letter-spacing: .1em;
+      white-space: nowrap;
+    }
+    .data-table thead th.center { text-align: center; }
+    .data-table tbody tr { border-bottom: 1px solid #0f1829; transition: background .1s; }
+    .data-table tbody tr:last-child { border-bottom: none; }
+    .data-table tbody tr:hover { background: #0f1829; }
+    .data-table tbody td { padding: 9px 16px; color: #94a3b8; }
+    .data-table tbody td.center { text-align: center; }
+    .risk-chip {
+      display: inline-block;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .risk-low      { background: rgba(34,197,94,.12);  color: #4ade80; }
+    .risk-high     { background: rgba(245,158,11,.12); color: #fbbf24; }
+    .risk-critical { background: rgba(239,68,68,.12);  color: #f87171; }
+
+    /* ── Rollback Accordion ─────────────────────────────────────────────────── */
+    .rollback-item { border-bottom: 1px solid #0f1829; }
+    .rollback-item:last-child { border-bottom: none; }
+    .rollback-toggle {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 20px;
+      background: none; border: none; cursor: pointer;
+      text-align: left; transition: background .1s;
+    }
+    .rollback-toggle:hover { background: #0f1829; }
+    .rollback-toggle-name { font-size: 11.5px; font-weight: 600; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+    .rollback-body {
+      padding: 0 20px 14px;
+      font-size: 11px; line-height: 1.75;
+      color: #64748b;
+      background: #080c14;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .rollback-body.hidden { display: none; }
+    .chevron-icon { width: 14px; height: 14px; color: #334155; transition: transform .2s; flex-shrink: 0; }
+
+    /* ── Audit Report Preview ───────────────────────────────────────────────── */
+    #audit-report {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      line-height: 1.75;
+      color: #64748b;
+      padding: 20px;
+      max-height: 380px;
+      overflow: auto;
+      background: #080c14;
+    }
+
+    /* ── Audit Counts ───────────────────────────────────────────────────────── */
+    .count-chip {
+      display: inline-block;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 9px; border-radius: 4px;
+      letter-spacing: .04em;
+    }
+
+    /* ── Toast ──────────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      z-index: 50;
+      font-size: 12.5px;
+      padding: 11px 18px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      max-width: 340px;
+      line-height: 1.5;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    #toast.hidden { display: none; }
+
+    /* ── Stream Timer ───────────────────────────────────────────────────────── */
+    #stream-timer {
+      font-size: 11px; color: #334155;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    #stream-exit-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+    }
+
+    /* ── Divider icon ───────────────────────────────────────────────────────── */
+    .icon-sm { width: 14px; height: 14px; flex-shrink: 0; }
+    .icon-accent { color: #3b82f6; }
+    .icon-muted  { color: #334155; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Site Header ───────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="site-header-inner">
+
+      <div class="header-brand">
+        <div class="brand-badge">RG</div>
+        <div>
+          <div class="brand-name">ReleaseGuard AI</div>
+          <div class="brand-sub">Pre-Flight Release Auditor</div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          System Active
+        </div>
+        <span class="env-tag">Production CI Gate v2.1.0</span>
+      </div>
+
+      <div class="header-right">
+        <span id="last-run" class="mono hidden" style="font-size:11px;color:#475569;"></span>
+        <button id="run-btn" onclick="runAudit()" class="btn-primary">
+          <svg id="run-icon" class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Run Pre-Flight Audit
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ── Main ──────────────────────────────────────────────────────────────── -->
+  <main class="main-content space-y">
+
+    <!-- Verdict Banner -->
+    <div id="verdict-banner" class="hidden fade-in"></div>
+
+    <!-- Top row: Risk Score + Domain Cards -->
+    <div class="grid-4">
+
+      <!-- Risk Score -->
+      <div class="risk-score-card">
+        <p class="risk-score-label">Risk Score</p>
+        <div style="position:relative;width:120px;height:120px;">
+          <svg style="width:100%;height:100%;transform:rotate(-90deg);" viewBox="0 0 108 108">
+            <circle cx="54" cy="54" r="50" fill="none" stroke="#1a2540" stroke-width="9"/>
+            <circle id="score-ring" class="score-ring" cx="54" cy="54" r="50" fill="none"
+              stroke="#3b82f6" stroke-width="9" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <span id="score-num" class="score-num" style="color:#f8fafc;">—</span>
+            <span class="score-denom">/ 10</span>
+          </div>
+        </div>
+        <div id="score-label" style="margin-top:12px;font-size:11px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;">Awaiting Run</div>
+        <div id="version-badge"></div>
+      </div>
+
+      <!-- Domain Cards -->
+      <div class="col-span-3 grid-3">
+
+        <div id="card-security" class="domain-card" onclick="showDetail('security')">
+          <div class="domain-card-top">
+            <div class="domain-icon">
+              <svg fill="none" stroke="#60a5fa" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <span id="badge-security" class="status-badge badge-idle">—</span>
+          </div>
+          <div class="domain-card-name">Security &amp; Middleware</div>
+          <div id="issues-security" class="domain-card-issues">Loading…</div>
+        </div>
+
+        <div id="card-migrations" class="domain-card" onclick="showDetail('migrations')">
+          <div class="domain-card-top">
+            <div class="domain-icon">
+              <svg fill="none" stroke="#a78bfa" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+              </svg>
+            </div>
+            <span id="badge-migrations" class="status-badge badge-idle">—</span>
+          </div>
+          <div class="domain-card-name">DB Migration Safety</div>
+          <div id="issues-migrations" class="domain-card-issues">Loading…</div>
+        </div>
+
+        <div id="card-api" class="domain-card" onclick="showDetail('api')">
+          <div class="domain-card-top">
+            <div class="domain-icon">
+              <svg fill="none" stroke="#34d399" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <span id="badge-api" class="status-badge badge-idle">—</span>
+          </div>
+          <div class="domain-card-name">API Contract Drift</div>
+          <div id="issues-api" class="domain-card-issues">Loading…</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="detail-panel" class="hidden fade-in card">
+      <div class="card-header">
+        <h2 id="detail-title" class="card-title"></h2>
+        <button class="detail-close-btn" onclick="document.getElementById('detail-panel').classList.add('hidden')">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div id="detail-body" class="card-body"></div>
+    </div>
+
+    <!-- Pre-Flight Script Output (legacy POST) -->
+    <div id="audit-output-wrap" class="hidden fade-in card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <svg class="icon-sm icon-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3"/>
+          </svg>
+          Pre-Flight Script Output
+        </h2>
+        <div id="audit-counts" style="display:flex;gap:6px;align-items:center;"></div>
+      </div>
+      <pre id="audit-output" class="code-block"></pre>
+    </div>
+
+    <!-- Live SSE Terminal -->
+    <div class="terminal-section fade-in">
+      <!-- Control strip -->
+      <div class="terminal-controls">
+        <div class="terminal-controls-left">
+          <span class="terminal-section-title">
+            <svg class="icon-sm icon-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3"/>
+            </svg>
+            Live Terminal Stream
+          </span>
+          <span id="stream-status-badge" class="status-badge badge-idle">idle</span>
+        </div>
+        <div class="terminal-controls-right">
+          <button onclick="startStream('audit')"   id="btn-stream-audit"   class="stream-btn sbtn-audit">Audit</button>
+          <button onclick="startStream('fix')"     id="btn-stream-fix"     class="stream-btn sbtn-fix">Fix</button>
+          <button onclick="startStream('dba')"     id="btn-stream-dba"     class="stream-btn sbtn-dba">DBA Sign-off</button>
+          <button onclick="startStream('sandbox')" id="btn-stream-sandbox" class="stream-btn sbtn-sandbox">Sandbox</button>
+          <button onclick="clearTerminal()"        id="btn-clear"          class="stream-btn sbtn-clear">Clear</button>
+        </div>
+      </div>
+      <!-- Title bar with window controls -->
+      <div class="terminal-titlebar">
+        <span class="terminal-dot" style="background:#ff5f57;"></span>
+        <span class="terminal-dot" style="background:#febc2e;"></span>
+        <span class="terminal-dot" style="background:#28c840;"></span>
+        <span id="terminal-cmd-label">releaseguard — bash</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+          <span id="stream-timer" class="hidden"></span>
+          <span id="stream-exit-badge" class="hidden"></span>
+        </div>
+      </div>
+      <!-- Terminal body -->
+      <div class="terminal-window" id="terminal-output">
+        <span class="terminal-line cmd">ReleaseGuard AI — Live Terminal</span>
+        <span class="terminal-line" style="color:#334155;">Select Audit, Fix, DBA Sign-off, or Sandbox to stream output here.</span>
+        <span class="terminal-cursor" id="terminal-cursor"></span>
+      </div>
+    </div>
+
+    <!-- Bottom row: Migrations + Rollbacks -->
+    <div class="grid-2">
+
+      <!-- Migration Inventory -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Migration Inventory</h2>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Migration</th>
+                <th class="center">Rollback</th>
+                <th class="center">Destructive</th>
+                <th class="center">Risk</th>
+              </tr>
+            </thead>
+            <tbody id="migration-rows">
+              <tr><td colspan="4" style="padding:16px;color:#334155;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Rollback Scripts -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Rollback Scripts</h2>
+          <span class="card-subtitle">Auto-generated by ReleaseGuard AI</span>
+        </div>
+        <div id="rollback-scripts" style="max-height:320px;overflow:auto;">
+          <div style="padding:16px;font-size:12px;color:#334155;">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RELEASE_AUDIT.md Preview -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <svg class="icon-sm icon-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          RELEASE_AUDIT.md Preview
+        </h2>
+        <span class="card-subtitle mono">RELEASE_AUDIT.md</span>
+      </div>
+      <pre id="audit-report" class="mono">Loading…</pre>
+    </div>
+
+  </main>
+
+  <!-- ── Toast ─────────────────────────────────────────────────────────────── -->
+  <div id="toast" class="hidden fade-in"></div>
+
+  <script>
+    // ─── State ────────────────────────────────────────────────────────────────
+    let currentAudit = null;
+
+    // ─── Score ring ───────────────────────────────────────────────────────────
+    function setScore(n) {
+      const ring = document.getElementById('score-ring');
+      const num  = document.getElementById('score-num');
+      const lbl  = document.getElementById('score-label');
+      const circumference = 314;
+      const offset = circumference - (n / 10) * circumference;
+      ring.style.strokeDashoffset = offset;
+
+      const color = n >= 8 ? '#f87171' : n >= 5 ? '#fbbf24' : '#4ade80';
+      ring.style.stroke = color;
+      num.textContent = n;
+      num.style.color = color;
+
+      lbl.textContent = n >= 8 ? 'CRITICAL' : n >= 5 ? 'ELEVATED' : 'ACCEPTABLE';
+      lbl.style.color = color;
+    }
+
+    // ─── Status badge helpers ─────────────────────────────────────────────────
+    const BADGE = {
+      PASS: 'badge-ok',
+      FAIL: 'badge-fail',
+      WARN: 'badge-warn',
+    };
+    const CARD_BORDER = {
+      PASS: '#22c55e',
+      FAIL: '#ef4444',
+      WARN: '#f59e0b',
+    };
+
+    function setBadge(domain, status, issueCount) {
+      const badge  = document.getElementById(`badge-${domain}`);
+      const card   = document.getElementById(`card-${domain}`);
+      const issues = document.getElementById(`issues-${domain}`);
+      badge.textContent = status === 'PASS' ? 'OK' : status === 'FAIL' ? 'BLOCKED' : status;
+      badge.className = `status-badge ${BADGE[status] || 'badge-idle'}`;
+      if (CARD_BORDER[status]) {
+        card.style.borderColor = CARD_BORDER[status] + '4d';
+      }
+      issues.textContent = issueCount === 0 ? 'No issues found' : `${issueCount} issue${issueCount > 1 ? 's' : ''} found`;
+      issues.style.color = issueCount > 0 ? '#f87171' : '#4ade80';
+    }
+
+    // ─── Migration table ──────────────────────────────────────────────────────
+    const RISK_CHIP = {
+      LOW:      'risk-chip risk-low',
+      HIGH:     'risk-chip risk-high',
+      CRITICAL: 'risk-chip risk-critical',
+    };
+    const TICK  = `<svg class="icon-sm" style="color:#4ade80;display:block;margin:0 auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
+    const CROSS = `<svg class="icon-sm" style="color:#f87171;display:block;margin:0 auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+
+    function renderMigrations(rows) {
+      const tbody = document.getElementById('migration-rows');
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:16px;color:#334155;">No migrations found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td class="mono" style="font-size:11px;" title="${r.name}">${r.name.replace('.up.sql','')}</td>
+          <td class="center">${r.hasRollback ? TICK : CROSS}</td>
+          <td class="center">${r.isDestructive
+            ? `<span style="font-size:10px;font-weight:700;color:#fbbf24;">YES</span>`
+            : `<span style="color:#1a2540;">—</span>`}</td>
+          <td class="center"><span class="${RISK_CHIP[r.risk] || 'risk-chip'}">${r.risk}</span></td>
+        </tr>`).join('');
+    }
+
+    // ─── Rollback scripts ─────────────────────────────────────────────────────
+    function renderRollbacks(list) {
+      const el = document.getElementById('rollback-scripts');
+      if (!list || list.length === 0) {
+        el.innerHTML = '<div style="padding:16px;font-size:12px;color:#334155;">No rollback scripts found.</div>';
+        return;
+      }
+      el.innerHTML = list.map((r, i) => `
+        <div class="rollback-item">
+          <button onclick="toggleRollback(${i})" class="rollback-toggle">
+            <span class="rollback-toggle-name">${r.name}</span>
+            <svg id="rollback-chevron-${i}" class="chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <pre id="rollback-body-${i}" class="rollback-body hidden">${escHtml(r.content)}</pre>
+        </div>`).join('');
+    }
+
+    function toggleRollback(i) {
+      const body    = document.getElementById(`rollback-body-${i}`);
+      const chevron = document.getElementById(`rollback-chevron-${i}`);
+      body.classList.toggle('hidden');
+      chevron.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    }
+
+    // ─── Detail panel ─────────────────────────────────────────────────────────
+    function showDetail(domain) {
+      if (!currentAudit) return;
+      const d = currentAudit.domains[domain];
+      const panel = document.getElementById('detail-panel');
+      document.getElementById('detail-title').textContent = d.label;
+
+      let html = '';
+      if (d.issues && d.issues.length > 0) {
+        html += `<ul style="list-style:none;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;">` +
+          d.issues.map(iss =>
+            `<li style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:#f87171;">
+              <svg style="width:13px;height:13px;flex-shrink:0;margin-top:2px;color:#f87171;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              </svg>
+              ${escHtml(iss)}
+            </li>`).join('') +
+          `</ul>`;
+      } else {
+        html += `<p style="color:#4ade80;font-size:13px;font-weight:600;margin-bottom:16px;">No issues detected in this domain.</p>`;
+      }
+      if (d.detail) html += `<p style="font-size:11px;color:#475569;margin-top:8px;">${escHtml(d.detail)}</p>`;
+      if (d.rows) {
+        html += `<div style="margin-top:16px;overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr>
+              <th>Migration</th>
+              <th class="center">Rollback</th>
+              <th class="center">Risk</th>
+            </tr></thead>
+            <tbody>` +
+          d.rows.map(r => `<tr>
+            <td class="mono" style="font-size:11px;">${r.name.replace('.up.sql','')}</td>
+            <td class="center">${r.hasRollback ? TICK : CROSS}</td>
+            <td class="center"><span class="${RISK_CHIP[r.risk] || 'risk-chip'}">${r.risk}</span></td>
+          </tr>`).join('') +
+          `</tbody></table></div>`;
+      }
+
+      document.getElementById('detail-body').innerHTML = html;
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ─── Render full audit data ───────────────────────────────────────────────
+    function renderAudit(data) {
+      currentAudit = data;
+      setScore(data.riskScore);
+      document.getElementById('version-badge').textContent = `v${data.version}`;
+
+      const { security, migrations, api } = data.domains;
+      setBadge('security',   security.status,   security.issues.length);
+      setBadge('migrations', migrations.status, migrations.issues.length);
+      setBadge('api',        api.status,        api.issues.length);
+
+      renderMigrations(migrations.rows);
+      renderRollbacks(data.rollbacks);
+      document.getElementById('audit-report').textContent = data.auditReport;
+
+      if (data.timestamp) {
+        const ts = document.getElementById('last-run');
+        ts.textContent = 'Last run: ' + new Date(data.timestamp).toLocaleTimeString();
+        ts.classList.remove('hidden');
+      }
+    }
+
+    // ─── Verdict banner ───────────────────────────────────────────────────────
+    function setVerdict(blocked, critical, high, medium) {
+      const el = document.getElementById('verdict-banner');
+      el.classList.remove('hidden');
+      if (blocked) {
+        el.style.cssText = 'background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#f87171;';
+        el.innerHTML = `
+          <svg class="verdict-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9l-6 6M9 9l6 6"/>
+          </svg>
+          <span style="font-size:13px;font-weight:700;">RELEASE BLOCKED</span>
+          <span style="font-size:12px;font-weight:400;color:#fca5a5;">— ${critical} critical, ${high} high finding${high !== 1 ? 's' : ''} must be resolved before deploying.</span>`;
+      } else if (medium > 0) {
+        el.style.cssText = 'background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);color:#fbbf24;';
+        el.innerHTML = `
+          <svg class="verdict-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span style="font-size:13px;font-weight:700;">CAUTION</span>
+          <span style="font-size:12px;font-weight:400;color:#fcd34d;">— ${medium} medium finding${medium !== 1 ? 's' : ''} present. Review before deploying.</span>`;
+      } else {
+        el.style.cssText = 'background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);color:#4ade80;';
+        el.innerHTML = `
+          <svg class="verdict-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span style="font-size:13px;font-weight:700;">CERTIFIED — RELEASE APPROVED</span>
+          <span style="font-size:12px;font-weight:400;color:#86efac;">— No critical or high severity findings detected.</span>`;
+      }
+    }
+
+    // ─── Run audit ────────────────────────────────────────────────────────────
+    async function runAudit() {
+      const btn  = document.getElementById('run-btn');
+      const icon = document.getElementById('run-icon');
+      btn.disabled = true;
+      btn.classList.add('opacity-70');
+      icon.classList.add('spin');
+      btn.querySelector('span') && (btn.querySelector('span').textContent = 'Running…');
+
+      try {
+        const res  = await fetch('/api/run-audit', { method: 'POST' });
+        const data = await res.json();
+
+        const wrap = document.getElementById('audit-output-wrap');
+        const pre  = document.getElementById('audit-output');
+        wrap.classList.remove('hidden');
+        pre.textContent = data.output || '(no output)';
+
+        const counts = document.getElementById('audit-counts');
+        counts.innerHTML = [
+          data.critical > 0 ? `<span class="count-chip" style="background:rgba(239,68,68,.12);color:#f87171;">${data.critical} critical</span>` : '',
+          data.high > 0     ? `<span class="count-chip" style="background:rgba(245,158,11,.12);color:#fbbf24;">${data.high} high</span>` : '',
+          data.medium > 0   ? `<span class="count-chip" style="background:rgba(234,179,8,.12);color:#facc15;">${data.medium} medium</span>` : '',
+        ].join('');
+
+        setVerdict(data.blocked, data.critical, data.high, data.medium);
+        if (data.audit) renderAudit(data.audit);
+
+        toast(data.blocked ? 'Audit complete — release blocked.' : 'Audit complete — no blockers found.', data.blocked ? 'error' : 'success');
+      } catch (e) {
+        toast('Failed to run audit: ' + e.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70');
+        icon.classList.remove('spin');
+      }
+    }
+
+    // ─── Toast ────────────────────────────────────────────────────────────────
+    let toastTimer;
+    function toast(msg, type = 'info') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      const base = 'fixed bottom-6 right-6 fade-in z-50 text-sm px-5 py-3 rounded-xl shadow-xl max-w-sm';
+      const colors = type === 'error'
+        ? 'background:#3b1a1a;color:#fca5a5;border:1px solid rgba(239,68,68,.3);'
+        : type === 'success'
+        ? 'background:#0d2e1a;color:#86efac;border:1px solid rgba(34,197,94,.3);'
+        : 'background:#111827;color:#cbd5e1;border:1px solid #1a2540;';
+      el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:50;font-size:12.5px;padding:10px 16px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:340px;' + colors;
+      el.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+
+    // ─── Utils ────────────────────────────────────────────────────────────────
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ─── SSE Live Terminal ────────────────────────────────────────────────────
+    let activeEventSource = null;
+    let streamStartTime   = null;
+    let timerInterval     = null;
+
+    const streamButtons = ['btn-stream-audit','btn-stream-fix','btn-stream-dba','btn-stream-sandbox'];
+
+    function setStreamButtons(disabled) {
+      streamButtons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = disabled;
+      });
+    }
+
+    function setStreamStatus(label, colorClass) {
+      const badge = document.getElementById('stream-status-badge');
+      badge.textContent = label;
+      badge.className = `status-badge ${colorClass}`;
+    }
+
+    function terminalAppend(text, cls = '') {
+      const terminal = document.getElementById('terminal-output');
+      const cursor   = document.getElementById('terminal-cursor');
+      if (cursor) cursor.remove();
+
+      const span = document.createElement('span');
+      span.className = 'terminal-line' + (cls ? ' ' + cls : '');
+      span.textContent = text;
+      terminal.appendChild(span);
+
+      const cur = document.createElement('span');
+      cur.id = 'terminal-cursor';
+      cur.className = 'terminal-cursor';
+      terminal.appendChild(cur);
+
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function clearTerminal() {
+      const terminal = document.getElementById('terminal-output');
+      terminal.innerHTML = '<span class="terminal-cursor" id="terminal-cursor"></span>';
+      document.getElementById('stream-status-badge').textContent = 'idle';
+      document.getElementById('stream-status-badge').className = 'status-badge badge-idle';
+      document.getElementById('terminal-cmd-label').textContent = 'releaseguard — bash';
+      document.getElementById('stream-exit-badge').classList.add('hidden');
+      document.getElementById('stream-timer').classList.add('hidden');
+      clearInterval(timerInterval);
+    }
+
+    function startStream(mode) {
+      if (activeEventSource) {
+        activeEventSource.close();
+        activeEventSource = null;
+      }
+      clearInterval(timerInterval);
+
+      const params = new URLSearchParams();
+      if (mode === 'fix')     params.set('fix', '1');
+      if (mode === 'dba')     params.set('dba', '1');
+      if (mode === 'sandbox') params.set('sandbox', '1');
+      const url = '/api/stream-audit?' + params.toString();
+
+      const labels = {
+        audit:   'releaseguard audit',
+        fix:     'releaseguard fix',
+        dba:     'releaseguard dba-signoff',
+        sandbox: 'migration-sandbox',
+      };
+      clearTerminal();
+      document.getElementById('terminal-cmd-label').textContent = labels[mode] || mode;
+      setStreamStatus('running…', 'badge-idle');
+      setStreamButtons(true);
+
+      streamStartTime = Date.now();
+      const timerEl = document.getElementById('stream-timer');
+      timerEl.classList.remove('hidden');
+      timerInterval = setInterval(() => {
+        const s = ((Date.now() - streamStartTime) / 1000).toFixed(1);
+        timerEl.textContent = s + 's';
+      }, 100);
+
+      const es = new EventSource(url);
+      activeEventSource = es;
+
+      es.onmessage = function(ev) {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch(_) { return; }
+
+        switch (msg.type) {
+          case 'start':
+            terminalAppend('$ ' + msg.data, 'cmd');
+            break;
+
+          case 'line':
+            if (msg.data.trim() !== '') {
+              terminalAppend(msg.data);
+            }
+            break;
+
+          case 'done': {
+            clearInterval(timerInterval);
+            const ok = msg.exitCode === 0;
+            const elapsed = ((Date.now() - streamStartTime) / 1000).toFixed(2);
+            terminalAppend('');
+            terminalAppend(msg.data, ok ? 'done-ok' : 'done-err');
+            terminalAppend(`[Process exited with code ${msg.exitCode} in ${elapsed}s]`, ok ? 'done-ok' : 'done-err');
+
+            setStreamStatus(ok ? 'done' : 'failed', ok ? 'badge-ok' : 'badge-fail');
+
+            const exitBadge = document.getElementById('stream-exit-badge');
+            exitBadge.textContent = `exit ${msg.exitCode}`;
+            exitBadge.style.cssText = ok
+              ? 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(34,197,94,.15);color:#4ade80;'
+              : 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(239,68,68,.15);color:#f87171;';
+            exitBadge.classList.remove('hidden');
+
+            setStreamButtons(false);
+            es.close();
+            activeEventSource = null;
+
+            if (mode !== 'sandbox') {
+              fetch('/api/audit').then(r => r.json()).then(renderAudit).catch(() => {});
+            }
+            break;
+          }
+
+          case 'error':
+            terminalAppend('[stream error] ' + msg.data, 'err');
+            setStreamStatus('error', 'badge-fail');
+            setStreamButtons(false);
+            break;
+        }
+      };
+
+      es.onerror = function() {
+        clearInterval(timerInterval);
+        terminalAppend('[connection lost]', 'err');
+        setStreamStatus('disconnected', 'badge-idle');
+        setStreamButtons(false);
+        es.close();
+        activeEventSource = null;
+      };
+    }
+
+    // ─── Boot: load static audit on page load ─────────────────────────────────
+    (async () => {
+      try {
+        const res  = await fetch('/api/audit');
+        const data = await res.json();
+        renderAudit(data);
+        const { security, migrations, api } = data.domains;
+        const allIssues = [...security.issues, ...migrations.issues, ...api.issues];
+        const critCount = allIssues.filter(i => /CRITICAL/i.test(i)).length;
+        const highCount = allIssues.filter(i => /HIGH/i.test(i)).length;
+        setVerdict(critCount > 0 || highCount > 0, critCount, highCount, 0);
+      } catch (e) {
+        toast('Could not load audit data: ' + e.message, 'error');
+      }
+    })();
+  </script>
+</body>
+</html>
