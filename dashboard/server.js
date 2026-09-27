@@ -248,6 +248,11 @@ app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🛡️  ReleaseGuard AI Dashboard running → http://localhost:${PORT}\n`);
-});
+module.exports = app;
+
+// Only start listening when run directly (not when imported by Vercel/tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n🛡️  ReleaseGuard AI Dashboard running → http://localhost:${PORT}\n`);
+  });
+}

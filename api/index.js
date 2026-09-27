@@ -1,4 +1,4 @@
-// Vercel serverless entrypoint — re-exports the Express app as a handler.
-const app = require('../src/app');
+// Vercel serverless entrypoint — serves the full ReleaseGuard AI dashboard.
+const app = require('../dashboard/server');
 
 module.exports = app;
