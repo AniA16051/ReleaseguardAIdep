@@ -15,6 +15,23 @@ app.use('/api/v1/products', productsRouter);
 // Internal admin routes — NOT in OpenAPI spec (intentionally undocumented for audit demo)
 app.use('/internal/admin', adminRouter);
 
+// Root landing page
+app.get('/', (req, res) => {
+  res.json({
+    name: 'ReleaseguardAI API',
+    version: '2.1.0',
+    status: 'ok',
+    endpoints: {
+      health:   'GET /health',
+      users:    '/api/v1/users',
+      orders:   '/api/v1/orders',
+      products: '/api/v1/products',
+      admin:    '/internal/admin',
+      ping:     'GET /api/v1/ping',
+    },
+  });
+});
+
 // Health check — NOT in OpenAPI spec
 app.get('/health', (req, res) => res.json({ status: 'ok', version: '2.1.0' }));
 
